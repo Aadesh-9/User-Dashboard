@@ -6,7 +6,7 @@ import {
   Link,
 } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
-import Users from "./pages/Users";
+import Users from "./pages/Users/Users";
 
 const Layout = () => (
   <div>
