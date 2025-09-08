@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import FetchUsers from "../../FetchUsers";
 import UserForm from "./UserForm";
 
-// ✅ one helper for sort + filter + pagination
 export const processUsers = (users, search, sortBy, order, page, perPage) => {
   // sorting
   const sorted = [...users].sort((a, b) => {
@@ -40,7 +39,6 @@ const Users = () => {
 
   if (loading) return <p>Loading...</p>;
 
-  // ✅ reuse helper
   const { visible, totalPages } = processUsers(
     users,
     search,
@@ -66,7 +64,7 @@ const Users = () => {
         body: JSON.stringify(form),
       });
       alert(editingId ? "User updated!" : "User created!");
-      window.location.reload(); // quick refresh (can optimize later)
+      window.location.reload();
     } catch (err) {
       console.error(err);
     }
@@ -94,7 +92,7 @@ const Users = () => {
         editingId={editingId}
       />
 
-      {/* Search and sort controls */}
+      {/* Search and sort  */}
       <div className="users-actions">
         <input
           placeholder="Search name/email"

@@ -1,5 +1,3 @@
-import React from "react";
-// ✅ reuse helper from Users.js
 import { processUsers } from "./Users";
 
 const UserTable = ({
@@ -16,7 +14,6 @@ const UserTable = ({
   startEdit,
   onRowClick,
 }) => {
-  // ✅ call helper
   const { visible, totalPages } = processUsers(
     users,
     search,
