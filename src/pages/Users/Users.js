@@ -92,7 +92,7 @@ const Users = () => {
         editingId={editingId}
       />
 
-      {/* Search and sort  */}
+      {/* Search and sort */}
       <div className="users-actions">
         <input
           placeholder="Search name/email"
@@ -125,8 +125,9 @@ const Users = () => {
         </thead>
         <tbody>
           {visible.map((u) => (
-            <React.Fragment key={u.id}>
+            <>
               <tr
+                key={u.id}
                 style={{ cursor: "pointer" }}
                 onClick={() => toggleExpand(u.id)}
               >
@@ -159,7 +160,7 @@ const Users = () => {
               </tr>
 
               {expandedId === u.id && (
-                <tr>
+                <tr key={`${u.id}-expanded`}>
                   <td colSpan="5">
                     <div
                       style={{
@@ -197,7 +198,7 @@ const Users = () => {
                   </td>
                 </tr>
               )}
-            </React.Fragment>
+            </>
           ))}
         </tbody>
       </table>
