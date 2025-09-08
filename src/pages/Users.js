@@ -3,96 +3,81 @@ import FetchUsers from "../FetchUsers";
 
 const Users = () => {
   const { users, loading } = FetchUsers();
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
 
-  // sort state
-  const [sort, setSort] = useState("name"); // "name" | "date"
-  const [sortOrder, setSortOrder] = useState("asc"); // "asc" | "desc"
-
-  // Form state for Create/Edit
+  // form + edit state
   const [form, setForm] = useState({ name: "", email: "", avatar: "" });
   const [editingId, setEditingId] = useState(null);
 
+  // search + sort + pagination
+  const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState("name"); // name | date
+  const [order, setOrder] = useState("asc"); // asc | desc
+  const [page, setPage] = useState(1);
+
   if (loading) return <p>Loading...</p>;
 
-  // ----- Sorting -----
-  const sortedUsers = [...users].sort((a, b) => {
-    let compareVal = 0;
-    if (sort === "name") {
-      compareVal = a.name.localeCompare(b.name);
-    } else {
-      compareVal = new Date(a.createdAt) - new Date(b.createdAt);
-    }
-    return sortOrder === "asc" ? compareVal : -compareVal;
+  // 🔹 sort
+  const sorted = [...users].sort((a, b) => {
+    let val =
+      sortBy === "name"
+        ? a.name.localeCompare(b.name)
+        : new Date(a.createdAt) - new Date(b.createdAt);
+    return order === "asc" ? val : -val;
   });
 
-  // ----- Search -----
-  const filtered = sortedUsers.filter(
+  // 🔹 search
+  const filtered = sorted.filter(
     (u) =>
       u?.name?.toLowerCase().includes(search.toLowerCase()) ||
       u?.email?.toLowerCase().includes(search.toLowerCase())
   );
 
-  // ----- Pagination -----
+  // 🔹 pagination
   const perPage = 10;
   const totalPages = Math.ceil(filtered.length / perPage);
-  const paginated = filtered.slice((page - 1) * perPage, page * perPage);
+  const visible = filtered.slice((page - 1) * perPage, page * perPage);
 
-  // Handle form input changes
+  // 🔹 handle form input
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // Create/Edit user
+  // 🔹 create or update user
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      if (editingId) {
-        await fetch(
-          `https://6874ce63dd06792b9c954fc7.mockapi.io/api/v1/users/${editingId}`,
-          {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(form),
-          }
-        );
-        alert("User updated successfully!");
-      } else {
-        await fetch(
-          "https://6874ce63dd06792b9c954fc7.mockapi.io/api/v1/users",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(form),
-          }
-        );
-        alert("User created successfully!");
-      }
+      const url = editingId
+        ? `https://6874ce63dd06792b9c954fc7.mockapi.io/api/v1/users/${editingId}`
+        : "https://6874ce63dd06792b9c954fc7.mockapi.io/api/v1/users";
+      const method = editingId ? "PUT" : "POST";
+
+      await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+
+      alert(editingId ? "User updated!" : "User created!");
       window.location.reload();
     } catch (err) {
       console.error(err);
     }
+
     setForm({ name: "", email: "", avatar: "" });
     setEditingId(null);
   };
 
-  // Edit user
-  const startEdit = (user) => {
-    setForm({ name: user.name, email: user.email, avatar: user.avatar || "" });
-    setEditingId(user.id);
-  };
-
-  // View details
-  const viewDetails = (user) => {
-    alert(`User Details:\nName: ${user.name}\nEmail: ${user.email}`);
+  // 🔹 start edit
+  const startEdit = (u) => {
+    setForm({ name: u.name, email: u.email, avatar: u.avatar || "" });
+    setEditingId(u.id);
   };
 
   return (
     <div className="users-container">
       <h2>Users</h2>
 
-      {/* Create/Edit Form */}
+      {/* form */}
       <form onSubmit={handleSubmit} className="user-form">
         <input
           name="name"
@@ -111,48 +96,34 @@ const Users = () => {
         />
         <input
           name="avatar"
-          placeholder="Avatar URL (optional)"
+          placeholder="Avatar URL"
           value={form.avatar}
           onChange={handleChange}
         />
-        <button type="submit">
-          {editingId ? "Update User" : "Create User"}
-        </button>
+        <button type="submit">{editingId ? "Update" : "Create"}</button>
       </form>
 
-      {/* Search + Sort Options */}
-      <div className="users-actions" style={{ margin: "15px 0" }}>
+      {/* search + sort */}
+      <div className="users-actions">
         <input
-          placeholder="Search by name/email"
+          placeholder="Search name/email"
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
             setPage(1);
           }}
         />
-
-        {/* Sort by field */}
-        <select
-          value={sort}
-          onChange={(e) => setSort(e.target.value)}
-          style={{ marginLeft: "15px" }}
-        >
+        <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
           <option value="name">Sort by Name</option>
           <option value="date">Sort by Date</option>
         </select>
-
-        {/* Sort order */}
-        <select
-          value={sortOrder}
-          onChange={(e) => setSortOrder(e.target.value)}
-          style={{ marginLeft: "10px" }}
-        >
-          <option value="asc">Ascending</option>
-          <option value="desc">Descending</option>
+        <select value={order} onChange={(e) => setOrder(e.target.value)}>
+          <option value="asc">Asc</option>
+          <option value="desc">Desc</option>
         </select>
       </div>
 
-      {/* Users Table */}
+      {/* table */}
       <table>
         <thead>
           <tr>
@@ -164,12 +135,8 @@ const Users = () => {
           </tr>
         </thead>
         <tbody>
-          {paginated.map((u) => (
-            <tr
-              key={u.id}
-              onClick={() => viewDetails(u)}
-              style={{ cursor: "pointer" }}
-            >
+          {visible.map((u) => (
+            <tr key={u.id}>
               <td>
                 {u.avatar ? (
                   <img
@@ -185,23 +152,16 @@ const Users = () => {
               </td>
               <td>{u.name}</td>
               <td>{u.email}</td>
-              <td>{new Date(u.createdAt).toLocaleString()}</td>
+              <td>{new Date(u.createdAt).toLocaleDateString()}</td>
               <td>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    startEdit(u);
-                  }}
-                >
-                  Edit
-                </button>
+                <button onClick={() => startEdit(u)}>Edit</button>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
 
-      {/* Pagination */}
+      {/* pagination */}
       <div className="pagination">
         <button disabled={page === 1} onClick={() => setPage(page - 1)}>
           Prev

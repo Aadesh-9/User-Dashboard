@@ -1,5 +1,6 @@
+import React from "react";
 import {
-  createBrowserRouter,
+  createHashRouter,
   RouterProvider,
   Outlet,
   Link,
@@ -11,14 +12,13 @@ const Layout = () => (
   <div>
     <h1>User Dashboard</h1>
     <nav className="navbar">
-      <Link to="/">Dashboard</Link>
-      <Link to="/users">Users</Link>
+      <Link to="/">Dashboard</Link> | <Link to="/users">Users</Link>
     </nav>
     <Outlet />
   </div>
 );
 
-const router = createBrowserRouter([
+const router = createHashRouter([
   {
     path: "/",
     element: <Layout />,

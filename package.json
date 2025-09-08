@@ -18,6 +18,8 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
@@ -39,5 +41,8 @@
       "last 1 safari version"
     ]
   },
-  "homepage": "https://Aadesh-9.github.io/User-Dashboard"
+  "homepage": "https://Aadesh-9.github.io/User-Dashboard",
+  "devDependencies": {
+    "gh-pages": "^6.3.0"
+  }
 }
