@@ -2,6 +2,32 @@ import React, { useState } from "react";
 import FetchUsers from "../../FetchUsers";
 import UserForm from "./UserForm";
 
+// ✅ one helper for sort + filter + pagination
+export const processUsers = (users, search, sortBy, order, page, perPage) => {
+  // sorting
+  const sorted = [...users].sort((a, b) => {
+    const val =
+      sortBy === "name"
+        ? a.name.localeCompare(b.name)
+        : new Date(a.createdAt) - new Date(b.createdAt);
+
+    return order === "asc" ? val : -val;
+  });
+
+  // searching
+  const filtered = sorted.filter(
+    (u) =>
+      u?.name?.toLowerCase().includes(search.toLowerCase()) ||
+      u?.email?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  // pagination
+  const totalPages = Math.ceil(filtered.length / perPage);
+  const visible = filtered.slice((page - 1) * perPage, page * perPage);
+
+  return { sorted, filtered, totalPages, visible };
+};
+
 const Users = () => {
   const { users, loading } = FetchUsers();
   const [form, setForm] = useState({ name: "", email: "", avatar: "" });
@@ -14,31 +40,19 @@ const Users = () => {
 
   if (loading) return <p>Loading...</p>;
 
-  // sort
-  const sorted = [...users].sort((a, b) => {
-    const val =
-      sortBy === "name"
-        ? a.name.localeCompare(b.name)
-        : new Date(a.createdAt) - new Date(b.createdAt);
-    return order === "asc" ? val : -val;
-  });
-
-  // filter  based on search
-  const filtered = sorted.filter(
-    (u) =>
-      u?.name?.toLowerCase().includes(search.toLowerCase()) ||
-      (u?.email && u.email.toLowerCase().includes(search.toLowerCase()))
+  // ✅ reuse helper
+  const { visible, totalPages } = processUsers(
+    users,
+    search,
+    sortBy,
+    order,
+    page,
+    10
   );
-
-  // pagination setup
-  const perPage = 10;
-  const totalPages = Math.ceil(filtered.length / perPage);
-  const visible = filtered.slice((page - 1) * perPage, page * perPage);
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
-  // submit form for adding or editing user
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -52,7 +66,7 @@ const Users = () => {
         body: JSON.stringify(form),
       });
       alert(editingId ? "User updated!" : "User created!");
-      window.location.reload();
+      window.location.reload(); // quick refresh (can optimize later)
     } catch (err) {
       console.error(err);
     }
@@ -60,13 +74,11 @@ const Users = () => {
     setEditingId(null);
   };
 
-  // start editing user
   const startEdit = (u) => {
     setForm({ name: u.name, email: u.email || "", avatar: u.avatar || "" });
     setEditingId(u.id);
   };
 
-  // toggle expanded row
   const toggleExpand = (id) => {
     setExpandedId(expandedId === id ? null : id);
   };
@@ -75,7 +87,6 @@ const Users = () => {
     <div className="users-container">
       <h2>Users</h2>
 
-      {/* User add/edit form */}
       <UserForm
         form={form}
         handleChange={handleChange}
@@ -83,7 +94,7 @@ const Users = () => {
         editingId={editingId}
       />
 
-      {/* Search and sort  */}
+      {/* Search and sort controls */}
       <div className="users-actions">
         <input
           placeholder="Search name/email"
@@ -103,7 +114,7 @@ const Users = () => {
         </select>
       </div>
 
-      {/* Users table */}
+      {/* Table */}
       <table>
         <thead>
           <tr>
@@ -115,88 +126,85 @@ const Users = () => {
           </tr>
         </thead>
         <tbody>
-          {visible.map((u) => {
-            return (
-              <>
-                <tr
-                  key={u.id}
-                  style={{ cursor: "pointer" }}
-                  onClick={() => toggleExpand(u.id)}
-                >
-                  <td>
-                    {u.avatar ? (
-                      <img
-                        src={u.avatar}
-                        alt="avatar"
-                        width="40"
-                        height="40"
-                        style={{ borderRadius: "50%" }}
-                      />
-                    ) : (
-                      "No Avatar"
-                    )}
-                  </td>
-                  <td>{u.name}</td>
-                  <td>{u.email || "-"}</td>
-                  <td>{new Date(u.createdAt).toLocaleDateString()}</td>
-                  <td>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        startEdit(u);
+          {visible.map((u) => (
+            <React.Fragment key={u.id}>
+              <tr
+                style={{ cursor: "pointer" }}
+                onClick={() => toggleExpand(u.id)}
+              >
+                <td>
+                  {u.avatar ? (
+                    <img
+                      src={u.avatar}
+                      alt="avatar"
+                      width="40"
+                      height="40"
+                      style={{ borderRadius: "50%" }}
+                    />
+                  ) : (
+                    "No Avatar"
+                  )}
+                </td>
+                <td>{u.name}</td>
+                <td>{u.email || "-"}</td>
+                <td>{new Date(u.createdAt).toLocaleDateString()}</td>
+                <td>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      startEdit(u);
+                    }}
+                  >
+                    Edit
+                  </button>
+                </td>
+              </tr>
+
+              {expandedId === u.id && (
+                <tr>
+                  <td colSpan="5">
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "15px",
+                        padding: "10px",
+                        margin: "5px 0",
+                        background: "#f0f8ff",
+                        borderRadius: "6px",
                       }}
                     >
-                      Edit
-                    </button>
+                      {u.avatar && (
+                        <img
+                          src={u.avatar}
+                          alt="avatar"
+                          width="50"
+                          height="50"
+                          style={{ borderRadius: "50%" }}
+                        />
+                      )}
+                      <div>
+                        <p>
+                          <strong>Name:</strong> {u.name}
+                        </p>
+                        <p>
+                          <strong>Email:</strong> {u.email || "-"}
+                        </p>
+                        <p>
+                          <strong>Created:</strong>{" "}
+                          {new Date(u.createdAt).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
                   </td>
                 </tr>
-
-                {expandedId === u.id && (
-                  <tr>
-                    <td colSpan="5">
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "15px",
-                          padding: "10px",
-                          margin: "5px 0",
-                          background: "#f0f8ff",
-                          borderRadius: "6px",
-                        }}
-                      >
-                        {u.avatar && (
-                          <img
-                            src={u.avatar}
-                            alt="avatar"
-                            width="50"
-                            height="50"
-                            style={{ borderRadius: "50%" }}
-                          />
-                        )}
-                        <div>
-                          <p>
-                            <strong>Name:</strong> {u.name}
-                          </p>
-                          <p>
-                            <strong>Email:</strong> {u.email || "-"}
-                          </p>
-                          <p>
-                            <strong>Created:</strong>{" "}
-                            {new Date(u.createdAt).toLocaleString()}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </>
-            );
-          })}
+              )}
+            </React.Fragment>
+          ))}
         </tbody>
       </table>
 
-      {/* Pagination buttons */}
+      {/* Pagination */}
       <div className="pagination">
         <button disabled={page === 1} onClick={() => setPage(page - 1)}>
           Prev

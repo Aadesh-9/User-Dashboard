@@ -1,3 +1,7 @@
+import React from "react";
+// ✅ reuse helper from Users.js
+import { processUsers } from "./Users";
+
 const UserTable = ({
   users,
   search,
@@ -12,25 +16,15 @@ const UserTable = ({
   startEdit,
   onRowClick,
 }) => {
-  //  sort
-  const sorted = [...users].sort((a, b) => {
-    let val =
-      sortBy === "name"
-        ? a.name.localeCompare(b.name)
-        : new Date(a.createdAt) - new Date(b.createdAt);
-    return order === "asc" ? val : -val;
-  });
-
-  //  search
-  const filtered = sorted.filter(
-    (u) =>
-      u?.name?.toLowerCase().includes(search.toLowerCase()) ||
-      u?.email?.toLowerCase().includes(search.toLowerCase())
+  // ✅ call helper
+  const { visible, totalPages } = processUsers(
+    users,
+    search,
+    sortBy,
+    order,
+    page,
+    perPage
   );
-
-  //  pages
-  const totalPages = Math.ceil(filtered.length / perPage);
-  const visible = filtered.slice((page - 1) * perPage, page * perPage);
 
   return (
     <>
