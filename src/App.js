@@ -9,7 +9,7 @@ import Users from "./pages/Users/Users";
 
 const Layout = () => (
   <div>
-    <h1>user-"Insights</h1>
+    <h1>User Insights</h1>
     <nav className="navbar">
       <Link to="/">Dashboard</Link> | <Link to="/users">Users</Link>
     </nav>
